@@ -40,7 +40,7 @@ func printWelcomeMessage() {
 	fmt.Println(welcomeMessage)
 
 	for _, server := range viper.GetStringSlice(label) {
-		serverInfo := fmt.Sprintf("%s@%s:%s", viper.GetString("user"), server, viper.GetString("tail."+file))
+		serverInfo := fmt.Sprintf("%s@%s:%s", viper.GetString("user"), server, viper.GetString("file."+file))
 		fmt.Println(console.ColorfulText(console.TextMagenta, serverInfo))
 	}
 	fmt.Printf("\n%s\n", console.ColorfulText(console.TextCyan, mossSep))
@@ -55,13 +55,14 @@ func main() {
 	}
 	flag.Parse()
 	args := flag.Args()
-	if len(args) < 4 {
+	if len(args) < 3 {
 		usageAndExit("")
 	}
-	search = args[0]
-	configFile = args[1]
-	label = args[2]
-	file = args[3]
+	configFile = args[0]
+	subArgs := args[1]
+	label = strings.Split(subArgs, ".")[0]
+	file = strings.Split(subArgs, ".")[1]
+	search = args[2]
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -91,8 +92,8 @@ func main() {
 			User:           viper.GetString("user"),
 			Password:       viper.GetString("password"),
 			PrivateKeyPath: viper.GetString("private_key_path"),
-			TailFile:       viper.GetString("tail." + file),
-			Search:         search,
+			TailFile:       viper.GetString("file." + file),
+			Searchs:        strings.Split(search, "|"),
 		})
 	}
 	if len(viper.GetStringSlice(label)) > 0 {
