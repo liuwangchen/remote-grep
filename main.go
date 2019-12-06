@@ -58,10 +58,10 @@ func main() {
 	if len(args) < 4 {
 		usageAndExit("")
 	}
-	configFile = args[0]
-	label = args[1]
-	file = args[2]
-	search = args[3]
+	search = args[0]
+	configFile = args[1]
+	label = args[2]
+	file = args[3]
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
 	if err != nil {

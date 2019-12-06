@@ -28,7 +28,7 @@ func NewCommand(server Server) (cmd *Command) {
 	cmd = &Command{
 		Host:   server.Hostname,
 		User:   server.User,
-		Script: fmt.Sprintf("grep -i %s %s", server.Search, server.TailFile),
+		Script: fmt.Sprintf("grep -i %s --color=auto %s", server.Search, server.TailFile),
 		Server: server,
 	}
 
