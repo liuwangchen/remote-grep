@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -17,6 +18,7 @@ var mossSep = ".--. --- .-- . .-. . -..   -... -.--   -- -.-- .-.. -..- ... .-- 
 var welcomeMessage = getWelcomeMessage() + console.ColorfulText(console.TextMagenta, mossSep)
 
 var configFile string
+var env string
 var label string
 var file string
 var search string
@@ -55,14 +57,16 @@ func main() {
 	}
 	flag.Parse()
 	args := flag.Args()
-	if len(args) < 3 {
+	if len(args) < 2 {
 		usageAndExit("")
 	}
-	configFile = args[0]
+	search = args[0]
 	subArgs := args[1]
-	label = strings.Split(subArgs, ".")[0]
-	file = strings.Split(subArgs, ".")[1]
-	search = args[2]
+	env = strings.Split(subArgs, ".")[0]
+	label = strings.Split(subArgs, ".")[1]
+	file = strings.Split(subArgs, ".")[2]
+	homeDir, _ := os.UserHomeDir()
+	configFile = filepath.Join(homeDir, ".remote", fmt.Sprintf("%s.yaml", env))
 	viper.SetConfigFile(configFile)
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -93,7 +97,7 @@ func main() {
 			Password:       viper.GetString("password"),
 			PrivateKeyPath: viper.GetString("private_key_path"),
 			TailFile:       viper.GetString("file." + file),
-			Searchs:        strings.Split(search, "|"),
+			Search:         search,
 		})
 	}
 	if len(viper.GetStringSlice(label)) > 0 {

@@ -6,7 +6,6 @@ import (
 	"github.com/liuwangchen/remote-grep/console"
 	"github.com/liuwangchen/remote-grep/ssh"
 	"io"
-	"strings"
 )
 
 type Command struct {
@@ -26,17 +25,10 @@ type Message struct {
 
 // NewCommand Create a new command
 func NewCommand(server Server) (cmd *Command) {
-	script := fmt.Sprintf("grep %s --color=auto %s", strings.Trim(server.Searchs[0], " "), server.TailFile)
-	if len(server.Searchs) > 1 {
-		for _, add := range server.Searchs[1:] {
-			script += fmt.Sprintf("| grep --color=auto %s", strings.Trim(add, " "))
-		}
-	}
-
 	cmd = &Command{
 		Host:   server.Hostname,
 		User:   server.User,
-		Script: script,
+		Script: fmt.Sprintf("grep '%s' --color=auto %s", server.Search, server.TailFile),
 		Server: server,
 	}
 
