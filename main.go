@@ -23,7 +23,7 @@ var label string
 var file string
 var search string
 
-var Version = "2.0"
+var Version = "3.0"
 
 func usageAndExit(message string) {
 
