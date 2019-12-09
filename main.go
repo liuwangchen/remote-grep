@@ -32,7 +32,7 @@ func usageAndExit(message string) {
 	}
 
 	flag.Usage()
-	fmt.Println("remote-tail config label file")
+	fmt.Println("remote-grep 'search' env.label.file")
 	_, _ = fmt.Fprint(os.Stderr, "\n")
 
 	os.Exit(1)
