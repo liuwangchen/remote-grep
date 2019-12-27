@@ -40,7 +40,7 @@ func NewCommand(server Server) (cmd *Command) {
 }
 
 // Execute the remote command
-func (cmd *Command) Execute(output chan Message) {
+func (cmd *Command) Execute(outputs, errputs chan Message) {
 
 	client := &ssh.Client{
 		Host:           cmd.Host + ":22",
@@ -74,8 +74,8 @@ func (cmd *Command) Execute(output chan Message) {
 		panic(fmt.Sprintf("[%s] redirect stderr failed: %s", cmd.Host, err))
 	}
 
-	go bindOutput(cmd.Host, output, &cmd.Stdout, "", 0)
-	go bindOutput(cmd.Host, output, &cmd.Stderr, "Error:", console.TextRed)
+	go bindOutput(cmd.Host, outputs, &cmd.Stdout, "", 0)
+	go bindOutput(cmd.Host, errputs, &cmd.Stderr, "Error:", console.TextRed)
 
 	if err = session.Start(cmd.Script); err != nil {
 		panic(fmt.Sprintf("[%s] failed to execute command: %s", cmd.Host, err))
@@ -87,7 +87,7 @@ func (cmd *Command) Execute(output chan Message) {
 }
 
 // bing the pipe output for formatted output to channel
-func bindOutput(host string, output chan Message, input *io.Reader, prefix string, color int) {
+func bindOutput(host string, output chan<- Message, input *io.Reader, prefix string, color int) {
 	reader := bufio.NewReader(*input)
 	for {
 		line, err := reader.ReadString('\n')
@@ -95,6 +95,7 @@ func bindOutput(host string, output chan Message, input *io.Reader, prefix strin
 			if err != io.EOF {
 				panic(fmt.Sprintf("[%s] faield to execute command: %s", host, err))
 			}
+			close(output)
 			break
 		}
 

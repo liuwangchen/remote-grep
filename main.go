@@ -75,20 +75,19 @@ func main() {
 
 	printWelcomeMessage()
 
-	outputs := make(chan command.Message, 255)
-	var wg sync.WaitGroup
-
+	outputChanList := make([]<-chan command.Message, 0)
 	for _, server := range viper.GetStringSlice(label) {
-		wg.Add(1)
+		outputs := make(chan command.Message, 255)
+		errputs := make(chan command.Message, 255)
+		outputChanList = append(outputChanList, outputs, errputs)
 		go func(server command.Server) {
 			defer func() {
 				if err := recover(); err != nil {
 					fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
 				}
 			}()
-			defer wg.Done()
 			cmd := command.NewCommand(server)
-			cmd.Execute(outputs)
+			cmd.Execute(outputs, errputs)
 		}(command.Server{
 			ServerName:     "",
 			Hostname:       server,
@@ -101,26 +100,42 @@ func main() {
 		})
 	}
 	if len(viper.GetStringSlice(label)) > 0 {
-		go func() {
-			for output := range outputs {
-				content := strings.Trim(output.Content, "\r\n")
-				// 去掉文件名称输出
-				if content == "" || (strings.HasPrefix(content, "==>") && strings.HasSuffix(content, "<==")) {
-					continue
-				}
-
-				fmt.Printf(
-					"%s %s %s\n",
-					console.ColorfulText(console.TextGreen, output.Host),
-					console.ColorfulText(console.TextYellow, "->"),
-					content,
-				)
+		for output := range mergeChan(outputChanList...) {
+			content := strings.Trim(output.Content, "\r\n")
+			// 去掉文件名称输出
+			if content == "" || (strings.HasPrefix(content, "==>") && strings.HasSuffix(content, "<==")) {
+				continue
 			}
-		}()
+
+			fmt.Printf(
+				"%s %s %s\n",
+				console.ColorfulText(console.TextGreen, output.Host),
+				console.ColorfulText(console.TextYellow, "->"),
+				content,
+			)
+		}
 	} else {
 		fmt.Println(console.ColorfulText(console.TextRed, "No target host is available"))
 	}
-	wg.Wait()
+}
+
+func mergeChan(cs ...<-chan command.Message) <-chan command.Message {
+	out := make(chan command.Message)
+	var wg sync.WaitGroup
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go func(c <-chan command.Message) {
+			for v := range c {
+				out <- v
+			}
+			wg.Done()
+		}(c)
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
 
 func getWelcomeMessage() string {
