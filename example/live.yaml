@@ -1,0 +1,9 @@
+user: xxxxx
+password: xxxx
+file: 
+  log: xxx.log
+test:
+  - xx.xx.xx.xx
+
+online:
+  - xx.xx.xx
