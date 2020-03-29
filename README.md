@@ -1,6 +1,9 @@
 # remote-grep
 
-## example config
+## introduce
+可以同时grep多台机器
+
+## config
 ```yaml
 user: xxxxx
 password: xxxx
