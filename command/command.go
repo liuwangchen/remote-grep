@@ -3,9 +3,11 @@ package command
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/liuwangchen/remote-grep/console"
 	"github.com/liuwangchen/remote-grep/ssh"
-	"io"
 )
 
 type Command struct {
@@ -28,7 +30,7 @@ func NewCommand(server Server) (cmd *Command) {
 	cmd = &Command{
 		Host:   server.Hostname,
 		User:   server.User,
-		Script: fmt.Sprintf("grep '%s' --color=auto %s", server.Search, server.TailFile),
+		Script: fmt.Sprintf("grep '%s' --color=auto %s", strings.ReplaceAll(strings.ReplaceAll(server.Search, "[", "\\["), "]", "\\]"), server.TailFile),
 		Server: server,
 	}
 
