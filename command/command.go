@@ -30,7 +30,7 @@ func NewCommand(server Server) (cmd *Command) {
 	cmd = &Command{
 		Host:   server.Hostname,
 		User:   server.User,
-		Script: fmt.Sprintf("grep '%s' --color=auto %s", strings.ReplaceAll(strings.ReplaceAll(server.Search, "[", "\\["), "]", "\\]"), server.TailFile),
+		Script: getGrepScript(server.Searchs, server.TailFile),
 		Server: server,
 	}
 
@@ -39,6 +39,17 @@ func NewCommand(server Server) (cmd *Command) {
 	//}
 
 	return
+}
+
+func getGrepScript(searchs []string, file string) string {
+	script := fmt.Sprintf("grep '%s' --color=auto %s", strings.ReplaceAll(strings.ReplaceAll(searchs[0], "[", "\\["), "]", "\\]"), file)
+	if len(searchs) > 1 {
+		searchs = searchs[1:]
+		for _, search := range searchs {
+			script += fmt.Sprintf("| grep '%s' --color=auto", strings.ReplaceAll(strings.ReplaceAll(search, "[", "\\["), "]", "\\]"))
+		}
+	}
+	return script
 }
 
 // Execute the remote command

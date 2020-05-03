@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/spf13/viper"
 
 	"github.com/liuwangchen/remote-grep/command"
 	"github.com/liuwangchen/remote-grep/console"
@@ -21,7 +22,7 @@ var configFile string
 var env string
 var label string
 var file string
-var search string
+var searchs []string
 
 var Version = "3.0"
 
@@ -60,8 +61,8 @@ func main() {
 	if len(args) < 2 {
 		usageAndExit("")
 	}
-	search = args[0]
-	subArgs := args[1]
+	searchs = args[:len(args)-1]
+	subArgs := args[len(args)-1]
 	env = strings.Split(subArgs, ".")[0]
 	label = strings.Split(subArgs, ".")[1]
 	file = strings.Split(subArgs, ".")[2]
@@ -96,7 +97,7 @@ func main() {
 			Password:       viper.GetString("password"),
 			PrivateKeyPath: viper.GetString("private_key_path"),
 			TailFile:       viper.GetString("file." + file),
-			Search:         search,
+			Searchs:        searchs,
 		})
 	}
 	if len(viper.GetStringSlice(label)) > 0 {
