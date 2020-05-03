@@ -41,11 +41,6 @@ func usageAndExit(message string) {
 
 func printWelcomeMessage() {
 	fmt.Println(welcomeMessage)
-
-	for _, server := range viper.GetStringSlice(label) {
-		serverInfo := fmt.Sprintf("%s@%s:%s", viper.GetString("user"), server, viper.GetString("file."+file))
-		fmt.Println(console.ColorfulText(console.TextMagenta, serverInfo))
-	}
 	fmt.Printf("\n%s\n", console.ColorfulText(console.TextCyan, mossSep))
 }
 
