@@ -79,7 +79,7 @@ func main() {
 		go func(server command.Server) {
 			defer func() {
 				if err := recover(); err != nil {
-					fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
+					// fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
 				}
 			}()
 			cmd := command.NewCommand(server)
@@ -99,7 +99,7 @@ func main() {
 		for output := range mergeChan(outputChanList...) {
 			content := strings.Trim(output.Content, "\r\n")
 			// 去掉文件名称输出
-			if content == "" || (strings.HasPrefix(content, "==>") && strings.HasSuffix(content, "<==")) {
+			if content == "" || (strings.HasPrefix(content, "==>") && strings.HasSuffix(content, "<==") || strings.Contains(content, "No such")) {
 				continue
 			}
 
