@@ -77,13 +77,11 @@ func main() {
 		errputs := make(chan command.Message, 255)
 		outputChanList = append(outputChanList, outputs, errputs)
 		go func(server command.Server) {
-			defer func() {
-				if err := recover(); err != nil {
-					// fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
-				}
-			}()
 			cmd := command.NewCommand(server)
-			cmd.Execute(outputs, errputs)
+			err := cmd.Execute(outputs, errputs)
+			if err != nil {
+				fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
+			}
 		}(command.Server{
 			ServerName:     "",
 			Hostname:       server,

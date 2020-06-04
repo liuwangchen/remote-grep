@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/liuwangchen/remote-grep/console"
 	"github.com/liuwangchen/remote-grep/ssh"
@@ -27,18 +28,12 @@ type Message struct {
 
 // NewCommand Create a new command
 func NewCommand(server Server) (cmd *Command) {
-	cmd = &Command{
+	return &Command{
 		Host:   server.Hostname,
 		User:   server.User,
 		Script: getGrepScript(server.Searchs, server.TailFile),
 		Server: server,
 	}
-
-	//if !strings.Contains(cmd.Host, ":") {
-	//	cmd.Host = cmd.Host + ":" + strconv.Itoa(server.Port)
-	//}
-
-	return
 }
 
 func getGrepScript(searchs []string, file string) string {
@@ -53,8 +48,11 @@ func getGrepScript(searchs []string, file string) string {
 }
 
 // Execute the remote command
-func (cmd *Command) Execute(outputs, errputs chan Message) {
-
+func (cmd *Command) Execute(outputs, errputs chan Message) error {
+	defer func() {
+		close(outputs)
+		close(errputs)
+	}()
 	client := &ssh.Client{
 		Host:           cmd.Host + ":22",
 		User:           cmd.User,
@@ -63,52 +61,52 @@ func (cmd *Command) Execute(outputs, errputs chan Message) {
 	}
 
 	if err := client.Connect(); err != nil {
-		panic(fmt.Sprintf("[%s] unable to connect: %s", cmd.Host, err))
+		return fmt.Errorf("[%s] unable to connect: %s", cmd.Host, err)
 	}
 	defer client.Close()
 
 	session, err := client.NewSession()
 	if err != nil {
-		panic(fmt.Sprintf("[%s] unable to create session: %s", cmd.Host, err))
+		return fmt.Errorf("[%s] unable to create session: %s", cmd.Host, err)
 	}
 	defer session.Close()
 
 	if err := session.RequestPty("xterm", 80, 40, *ssh.CreateTerminalModes()); err != nil {
-		panic(fmt.Sprintf("[%s] unable to create pty: %v", cmd.Host, err))
+		return fmt.Errorf("[%s] unable to create pty: %v", cmd.Host, err)
 	}
 
 	cmd.Stdout, err = session.StdoutPipe()
 	if err != nil {
-		panic(fmt.Sprintf("[%s] redirect stdout failed: %s", cmd.Host, err))
+		return fmt.Errorf("[%s] redirect stdout failed: %s", cmd.Host, err)
 	}
 
 	cmd.Stderr, err = session.StderrPipe()
 	if err != nil {
-		panic(fmt.Sprintf("[%s] redirect stderr failed: %s", cmd.Host, err))
+		return fmt.Errorf("[%s] redirect stderr failed: %s", cmd.Host, err)
 	}
-
-	go bindOutput(cmd.Host, outputs, &cmd.Stdout, "", 0)
-	go bindOutput(cmd.Host, errputs, &cmd.Stderr, "Error:", console.TextRed)
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+	go bindOutput(wg, cmd.Host, outputs, &cmd.Stdout, "", 0)
+	go bindOutput(wg, cmd.Host, errputs, &cmd.Stderr, "Error:", console.TextRed)
 
 	if err = session.Start(cmd.Script); err != nil {
-		panic(fmt.Sprintf("[%s] failed to execute command: %s", cmd.Host, err))
+		return fmt.Errorf("[%s] failed to execute command: %s", cmd.Host, err)
 	}
 
 	if err = session.Wait(); err != nil {
-		panic(fmt.Sprintf("[%s] failed to wait command: %s", cmd.Host, err))
+		return fmt.Errorf("[%s] failed to wait command: %s", cmd.Host, err)
 	}
+	wg.Wait()
+	return nil
 }
 
 // bing the pipe output for formatted output to channel
-func bindOutput(host string, output chan<- Message, input *io.Reader, prefix string, color int) {
+func bindOutput(wg *sync.WaitGroup, host string, output chan<- Message, input *io.Reader, prefix string, color int) {
+	defer wg.Done()
 	reader := bufio.NewReader(*input)
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil || io.EOF == err {
-			if err != io.EOF {
-				panic(fmt.Sprintf("[%s] faield to execute command: %s", host, err))
-			}
-			close(output)
 			break
 		}
 
