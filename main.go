@@ -78,10 +78,7 @@ func main() {
 		outputChanList = append(outputChanList, outputs, errputs)
 		go func(server command.Server) {
 			cmd := command.NewCommand(server)
-			err := cmd.Execute(outputs, errputs)
-			if err != nil {
-				fmt.Printf(console.ColorfulText(console.TextRed, "Error: %s\n"), err)
-			}
+			cmd.Execute(outputs, errputs)
 		}(command.Server{
 			ServerName:     "",
 			Hostname:       server,
