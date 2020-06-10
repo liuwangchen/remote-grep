@@ -84,18 +84,16 @@ func (cmd *Command) Execute(outputs, errputs chan Message) error {
 	if err != nil {
 		return fmt.Errorf("[%s] redirect stderr failed: %s", cmd.Host, err)
 	}
+	if err = session.Start(cmd.Script); err != nil {
+		return fmt.Errorf("[%s] failed to execute command: %s", cmd.Host, err)
+	}
+	if err = session.Wait(); err != nil {
+		return fmt.Errorf("[%s] failed to wait command: %s", cmd.Host, err)
+	}
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 	go bindOutput(wg, cmd.Host, outputs, &cmd.Stdout, "", 0)
 	go bindOutput(wg, cmd.Host, errputs, &cmd.Stderr, "Error:", console.TextRed)
-
-	if err = session.Start(cmd.Script); err != nil {
-		return fmt.Errorf("[%s] failed to execute command: %s", cmd.Host, err)
-	}
-
-	if err = session.Wait(); err != nil {
-		return fmt.Errorf("[%s] failed to wait command: %s", cmd.Host, err)
-	}
 	wg.Wait()
 	return nil
 }
