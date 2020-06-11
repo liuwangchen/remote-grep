@@ -9,6 +9,7 @@ user: xxxxx
 password: xxxx
 file: 
   log: xxx.log
+  warn: xxx*.warn(可以配置*进行多个文件grep)
 test:
   - xx.xx.xx.xx
 
