@@ -21,6 +21,7 @@ mkdir ~/.remote && mv example.yaml ~/.remote/
 
 
 ## usage 
-remote-grep xxx {project}.{env}.{file} 这个命令可以在任意路径下执行
+1、remote-grep xxx {project}.{env}.{file} 这个命令可以在任意路径下执行
+2、remote-grep xxx xxxx xxxx {project}.{env}.{file} 支持多个条件grep
 
 ps: project 是配置文件的文件名，env是配置文件中节点名可以在里边配不同环境的机器集群，file是file节点中配置的文件路径
